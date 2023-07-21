@@ -333,11 +333,7 @@ if test "$gcc" -eq 1 && ($cc $CFLAGS -c $test.c) >> configure.log 2>&1; then
         ARCH=$CC_ARCH
       fi ;;
     arm | armeb)
-      if test $native -eq 0; then
-        ARCH=arm
-      else
-        ARCH=native
-      fi
+      ARCH=arm
       if test "${uname}" = "eabi"; then
         # No ACLE support
         uname=arm
@@ -347,25 +343,15 @@ if test "$gcc" -eq 1 && ($cc $CFLAGS -c $test.c) >> configure.log 2>&1; then
         fi
       fi
       if test $buildacle -eq 1; then
-        if test $native -eq 0; then
-          ARCH=armv8-a+crc
-        fi
+        ARCH=armv8-a+crc
       fi ;;
     armv8l)
-      if test $native -eq 0; then
-        ARCH=armv8-a
-      else
-        ARCH=native
-      fi ;;
+      ARCH=armv8-a ;;
     aarch64 | aarch64_be | arm64)
       if test "${uname}" = "elf"; then
         uname=aarch64
       fi
-      if test $native -eq 0; then
-        ARCH=aarch64
-      else
-        ARCH=native
-      fi ;;
+      ARCH=aarch64 ;;
     powerpc | ppc)
       ARCH=powerpc ;;
     powerpc64 | ppc64)
@@ -1795,7 +1781,11 @@ EOF
                         SFLAGS="${SFLAGS} -DARM_NEON"
 
                         if test $MFPU_NEON_AVAILABLE -eq 1; then
-                            neonflag="-mfpu=neon"
+                            if test $native -eq 0; then
+                                neonflag="-mfpu=neon"
+                            else
+                                neonflag=""
+                            fi
                         fi
 
                         if test $NEON_HAS_LD4 -eq 1; then
@@ -1819,7 +1809,11 @@ EOF
                         SFLAGS="${SFLAGS} -DARM_NEON"
 
                         if test $MFPU_NEON_AVAILABLE -eq 1;then
-                            neonflag="-mfpu=neon"
+                            if test $native -eq 0; then
+                                neonflag="-mfpu=neon"
+                            else
+                                neonflag=""
+                            fi
                         fi
 
                         if test $NEON_HAS_LD4 -eq 1; then
@@ -1833,7 +1827,11 @@ EOF
                 fi
             ;;
             armv8-a+crc | armv8-a+crc+simd | armv8.[1234]-a | armv8.[1234]-a+simd)
-                acleflag="-march=${ARCH}"
+                if test $native -eq 0; then
+                    acleflag="-march=${ARCH}"
+                else
+                    acleflag=""
+                fi
 
                 if test $without_optimizations -eq 0; then
                     if test $ACLE_AVAILABLE -eq 1; then
@@ -1849,7 +1847,11 @@ EOF
                         SFLAGS="${SFLAGS} -DARM_NEON"
 
                         if test $MFPU_NEON_AVAILABLE -eq 1;then
-                            neonflag="-mfpu=neon"
+                            if test $native -eq 0; then
+                                neonflag="-mfpu=neon"
+                            else
+                                neonflag=""
+                            fi
                         fi
 
                         if test $NEON_HAS_LD4 -eq 1; then
@@ -1869,12 +1871,7 @@ EOF
     aarch64)
         [ ! -z $CROSS_PREFIX ] && QEMU_ARCH=aarch64
         ARCHDIR=arch/arm
-
-        if test $native -eq 0; then
-            ARCH="armv8-a"
-        else
-            ARCH="native"
-        fi
+        ARCH="armv8-a"
 
         if test $without_optimizations -eq 0; then
             check_neon_ld4_intrinsics
@@ -1905,9 +1902,7 @@ EOF
             fi
 
             if test $buildacle -eq 1; then
-                if test $native -eq 0; then
-                    ARCH="${ARCH}+crc"
-                fi
+                ARCH="${ARCH}+crc"
                 CFLAGS="${CFLAGS} -DARM_ACLE"
                 SFLAGS="${SFLAGS} -DARM_ACLE"
                 ARCH_STATIC_OBJS="${ARCH_STATIC_OBJS} crc32_acle.o insert_string_acle.o"
@@ -1915,9 +1910,7 @@ EOF
             fi
 
             if test $buildneon -eq 1; then
-                if test $native -eq 0; then
-                    ARCH="${ARCH}+simd"
-                fi
+                ARCH="${ARCH}+simd"
                 CFLAGS="${CFLAGS} -DARM_NEON"
                 SFLAGS="${SFLAGS} -DARM_NEON"
                 ARCH_STATIC_OBJS="${ARCH_STATIC_OBJS} adler32_neon.o chunkset_neon.o compare256_neon.o slide_hash_neon.o"
@@ -1925,8 +1918,13 @@ EOF
             fi
         fi
 
-        neonflag="-march=${ARCH}"
-        acleflag="-march=${ARCH}"
+        if test $native -eq 0; then
+            neonflag="-march=${ARCH}"
+            acleflag="-march=${ARCH}"
+        else
+            neonflag=""
+            acleflag=""
+        fi
     ;;
     powerpc*)
         case "${ARCH}" in
