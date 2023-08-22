@@ -695,18 +695,14 @@ int32_t Z_EXPORT PREFIX(inflate)(PREFIX3(stream) *strm, int32_t flush) {
 
         case STORED:
             /* get and verify stored block length */
-            //BYTEBITS();                         /* go to byte boundary */
-            //NEEDBITS(32);
-            //if ((hold & 0xffff) != ((hold >> 16) ^ 0xffff)) {
-            //    SET_BAD("invalid stored block lengths");
-            //    break;
-            //}
-            //state->length = (uint16_t)hold;
-            //Tracev((stderr, "inflate:       stored length %u\n", state->length));
-            //INITBITS();
-            //state->mode = COPY_;
-            //if (flush == Z_TREES)
-            //    goto inf_leave;
+            BYTEBITS();                         /* go to byte boundary */
+            NEEDBITS(16);
+            state->length = (uint16_t)hold;
+            Tracev((stderr, "inflate:       stored length %u\n", state->length));
+            INITBITS();
+            state->mode = COPY_;
+            if (flush == Z_TREES)
+                goto inf_leave;
             Z_FALLTHROUGH;
 
         case COPY_:
